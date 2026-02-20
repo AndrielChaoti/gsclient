@@ -22,3 +22,8 @@ bash.exe.*
 
 # Ignore Rider
 .idea/
+
+*DotSettings.user
+
+#ignore diff tool file backups
+*.orig
