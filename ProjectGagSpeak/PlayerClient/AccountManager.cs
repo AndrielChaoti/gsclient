@@ -2,7 +2,6 @@
 using CkCommons;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagspeakAPI.Connection;
 
 namespace GagSpeak.PlayerClient;
@@ -142,13 +141,17 @@ public class AccountManager
         return _config.Current.Profiles[cid];
     }
 
-    public void RemoveProfile(AccountProfile profile)
+    public bool RemoveProfile(AccountProfile profile)
     {
         if (!_config.Current.Profiles.Remove(profile.ContentId))
+        {
             _logger.LogWarning($"Attempted to remove profile with CID {profile.ContentId} but it was not found.");
+            return false;
+        }
         else
             _logger.LogInformation($"Removed profile for {profile.PlayerName} ({profile.ContentId}).");
         _config.Save();
+        return true;
     }
 
     public bool TryUpdateSecretKey(AccountProfile profile, string newKey)

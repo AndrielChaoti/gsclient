@@ -7,7 +7,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
@@ -244,7 +243,7 @@ public class HomeTab
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y - ImUtf8.FrameHeightSpacing));
         if (CkGui.IconButton(FAI.PencilAlt, inPopup: true))
-            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
+            _mediator.Publish(new OpenSettingsUI(9, 1));
         CkGui.AttachTooltip("Open Alias/Vanity Editor");
 
         // Below it, draw out the other data
@@ -311,7 +310,7 @@ public class HomeTab
             }
         }
         if (ImGui.IsItemClicked())
-            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
+            _mediator.Publish(new OpenSettingsUI(8, 0));
         CkGui.AttachTooltip("Reflects current Account Standing.--NL--" +
             "--COL--Too many strikes can lead to restrictions or bans.--COL--", ImGuiColors.ParsedGrey);
 
@@ -450,7 +449,7 @@ public class HomeTab
 
         if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
-        CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
+        CkGui.AttachTooltip("See the latest patch notes for GagSpeak.");
 
         SupportButton(winPtr, style, width);
         FeedbackButton(winPtr, style, width);
@@ -511,7 +510,7 @@ public class HomeTab
 
             if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
                 _mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
-            CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
+            CkGui.AttachTooltip("See the latest patch notes for GagSpeak.");
 
             SupportButton(winPtr, style, width);
             FeedbackButton(winPtr, style, width);

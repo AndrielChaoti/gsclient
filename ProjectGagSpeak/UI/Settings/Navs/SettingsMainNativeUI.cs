@@ -2,7 +2,6 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Game.Text;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -16,8 +15,6 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
-using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -166,6 +163,7 @@ public class SettingsMainNativeUI
         {
             _config.Data.DtrPrivacy = privacyDtr;
             _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.PrivacyRadarTT, true);
 
@@ -174,6 +172,7 @@ public class SettingsMainNativeUI
         {
             _config.Data.DtrActionNotifs = actionNotifsDtr;
             _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.ActionsNotifTT, true);
 
@@ -182,6 +181,7 @@ public class SettingsMainNativeUI
         {
             _config.Data.DtrVibeStatus = vibeDtr;
             _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.VibeStatusTT, true);
     }
@@ -233,7 +233,7 @@ public class SettingsMainNativeUI
             _chatConfig.Data.ShowDMsInChatbox = useDMsNative;
             _chatConfig.Save();
         }
-        CkGui.HelpTextFramed("Includes DirectMessages sent via Sundouleia." +
+        CkGui.HelpTextFramed("Includes DirectMessages sent via GagSpeak." +
             "--NL----COL--This is not yet integrated due to feedback.--COL--", CkCol.TriStateCross.Uint(), true);
 
         using (ImRaii.Disabled(!useDMsNative))

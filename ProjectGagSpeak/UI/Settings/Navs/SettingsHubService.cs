@@ -20,7 +20,6 @@ public partial class SettingsHubService
         Reputation,
         Account,
         GlobalPerms,
-        GlobalLoci,
         HubSelector,
     }
 
@@ -54,7 +53,6 @@ public partial class SettingsHubService
             .AddTab(HubSettingsTabs.Reputation, "Reputation")
             .AddTab(HubSettingsTabs.Account, "Account")
             .AddTab(HubSettingsTabs.GlobalPerms, "Global Perms")
-            .AddTab(HubSettingsTabs.GlobalLoci, "Global Loci")
             .AddTab(HubSettingsTabs.HubSelector, "Hub Selector")
             .Build();
     }
@@ -88,9 +86,6 @@ public partial class SettingsHubService
                 break;
             case HubSettingsTabs.GlobalPerms:
                 DrawGlobalPerms();
-                break;
-            case HubSettingsTabs.GlobalLoci:
-                DrawGlobalLoci();
                 break;
             case HubSettingsTabs.HubSelector:
                 DrawHubSelector();
@@ -149,26 +144,6 @@ public partial class SettingsHubService
                 UiService.SetUITask(async () => await _hub.Reconnect(DisconnectIntent.Reload).ConfigureAwait(false));
             }
         }
-
-        ImGui.Separator();
-        ImGui.SetNextItemWidth(250);
-        ImGui.InputText("Custom Service Name", ref _customServerName, 255);
-
-        ImGui.SetNextItemWidth(250);
-        ImGui.InputText("Custom Service URI", ref _customServerUri, 255);
-        if (CkGui.IconTextButton(FAI.Plus, "Add Service"))
-        {
-            if (string.IsNullOrWhiteSpace(_customServerUri) || !Uri.IsWellFormedUriString(_customServerUri, UriKind.Absolute))
-                return;
-            // It is valid, so add the service.
-            var newService = new ServerHubInfo() { HubName = _customServerName, HubURI = _customServerUri };
-            if (!_connections.AddServerHub(newService))
-                return;
-
-            // Reset the input fields, and save the config.
-            _customServerName = string.Empty;
-            _customServerUri = string.Empty;
-        }        
     }
 
     private void DrawReputation()
@@ -192,7 +167,6 @@ public partial class SettingsHubService
 
         DrawCategoryStatus("Profile Viewing:", rep.CanViewProfiles, !rep.ProfileViewing, rep.ProfileViewTimeout, rep.ProfileViewStrikes);
         DrawCategoryStatus("Profile Editing:", rep.CanEditProfiles, !rep.ProfileEditing, rep.ProfileEditTimeout, rep.ProfileEditStrikes);
-        DrawCategoryStatus("Radar Usage:", rep.CanUseRadar, !rep.RadarUsage, rep.RadarTimeout, rep.RadarStrikes);
         DrawCategoryStatus("Chat Usage:", rep.CanUseChat, !rep.ChatUsage, rep.ChatTimeout, rep.ChatStrikes);
 
         void DrawCategoryStatus(string label, bool canUse, bool usageBanned, DateTime timeout, int strikes)
@@ -215,10 +189,5 @@ public partial class SettingsHubService
     private void DrawGlobalPerms()
     {
         CkGui.FontText("GlobalPerms", Fonts.DefaultScaled);
-    }
-
-    private void DrawGlobalLoci()
-    {
-        CkGui.FontText("Global Loci Permissions", Fonts.DefaultScaled);
     }
 }
