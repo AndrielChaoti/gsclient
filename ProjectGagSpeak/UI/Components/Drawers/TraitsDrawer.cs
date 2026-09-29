@@ -50,6 +50,15 @@ public class AttributeDrawer
 
     private static Vector2 TraitBoxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
 
+    private const string TightnessLabel = "Tightness (50-1000)";
+    private const string TrivialLabel = "Trivial";
+    private const string ImpossibleLabel = "Impossible";
+
+    private static float EscapeAttributeContentWidth =>
+        ImGui.CalcTextSize(TightnessLabel + TrivialLabel + ImpossibleLabel).X
+        + (ImGui.GetFrameHeight() * 4)
+        + (ImGui.GetStyle().ItemSpacing.X * 7);
+
     public void DrawAttributesChild(IAttributeItem attributes, float width, int maxPerRow, Traits toShow = Traits.All)
     {
         if (toShow is Traits.None)
@@ -63,55 +72,49 @@ public class AttributeDrawer
                                           HeaderFlags.AddPaddingToHeight))
             DrawAttributesInternal(attributes, toShow, c.InnerRegion.X, maxPerRow);
 
-        height = ImGui.GetFrameHeightWithSpacing() + 2 * ImGui.GetStyle().ItemSpacing.Y;
+        rows = width < EscapeAttributeContentWidth ? 2 : 1;
+        height = (ImGui.GetFrameHeightWithSpacing() * rows) + (2 * ImGui.GetStyle().ItemSpacing.Y);
 
         using (var c = CkRaii.HeaderChild("Escape Difficulty", new Vector2(width, height)))
         {
-            DrawEscapeAttributesInternal(attributes);
+            DrawEscapeAttributesInternal(attributes, rows == 1);
         }
     }
 
-    private void DrawEscapeAttributesInternal(IAttributeItem attributes)
+    private void DrawEscapeAttributesInternal(IAttributeItem attributes, bool singleRow)
     {
         var tightness = attributes.DefaultTightness;
-        var trivial = attributes.DefaultTightness == 1;
-        var impossible = attributes.DefaultTightness == 0;
 
-        using (ImRaii.Disabled(trivial || impossible))
+        ImGui.SetNextItemWidth(ImGui.GetFrameHeight() * 2);
+        if (ImGui.InputInt(TightnessLabel, ref tightness))
         {
-            ImGui.SetNextItemWidth(ImGui.GetFrameHeight() * 2);
-            if (ImGui.InputInt("Tightness (50-1000)", ref tightness))
+            if (tightness != 0 && tightness != 1)
             {
-                if (tightness < 50)
-                    tightness = 50;
-                else if (tightness > 1000)
-                    tightness = 1000;
-                attributes.DefaultTightness = tightness;
+                tightness = Math.Clamp(tightness, 50, 1000);
             }
+
+            attributes.DefaultTightness = tightness;
         }
 
         CkGui.AttachTooltip(
             "Controls how difficult the item and locks on it will be to remove by yourself, when 'Hardcore Item Removal' is enabled and severe traits worn.--SEP--Tightness above 250 is likely to take hours by itself. Other active traits from all worn items impact escape progress negatively.");
 
-        using (ImRaii.Disabled(impossible))
-        {
+        if (singleRow)
             ImGui.SameLine();
-            if (ImGui.Checkbox("Trivial", ref trivial))
-            {
-                attributes.DefaultTightness = trivial ? 1 : 100;
-            }
+
+        using var g = ImRaii.Group();
+        if (ImGui.RadioButton(TrivialLabel, ref tightness, 1))
+        {
+            attributes.DefaultTightness = tightness;
         }
 
         CkGui.AttachTooltip(
             "You will always be able to remove this item with little effort, even when 'Hardcore Item Removal' is enabled and other stricter restraints are worn.");
 
-        using (ImRaii.Disabled(trivial))
+        ImGui.SameLine();
+        if (ImGui.RadioButton(ImpossibleLabel, ref tightness, 0))
         {
-            ImGui.SameLine();
-            if (ImGui.Checkbox("Impossible", ref impossible))
-            {
-                attributes.DefaultTightness = impossible ? 0 : 100;
-            }
+            attributes.DefaultTightness = tightness;
         }
 
         CkGui.AttachTooltip(
