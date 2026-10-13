@@ -1,4 +1,5 @@
 using CkCommons;
+using CkCommons.Audio;
 using CkCommons.GarblerCore;
 using CkCommons.HybridSaver;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -93,22 +94,20 @@ public class MainConfigData : IAudioConfigData
     public bool RemoveRestraintOnTimerExpire { get; set; } = false; // Auto-Remove restraint when timer falloff occurs.
 
     // GLOBAL TOYBOX SETTINGS
-    // public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
-    public Guid DirectOutDevice { get; set; } = Guid.Empty;
-    public string AsioDevice { get; set; } = "";
-    public string WasapiDevice { get; set; } = "";
+    public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
+    public string AudioOutputDevice { get; set; } = string.Empty;
 
     // The name displayed when entering a vibe lobby and chatting in it. Should not be changed while in a room.
     public string NicknameInVibeRooms { get; set; } = "Anon. Kinkster";
 
     public bool IntifaceAutoConnect { get; set; } = false;                      // if we should auto-connect to intiface
+    public bool IntifaceOpenInstallerLink { get; set; } = true;                 // if the download page opens when intiface isn't found
     public string IntifaceConnectionSocket { get; set; } = "ws://localhost:12345"; // connection link from plugin to intiface
 
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = "";
     public string PiShockUsername { get; set; } = "";
     public int GlobalShockerId { get; set; } = 0;
-    public Dictionary<string, int> PairShockerIds { get; set; } = new(); // Per-pair shocker device selection (UID → shocker ID).
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
     public bool HardcoreEscape { get; set; } = false; // Challenge removing or unlocking equipment, when bound
 
@@ -187,10 +186,9 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
         try
         {
             // if the main file does not exist, attempt to load the text from the backup.
-            if (File.Exists(file))
+            if (_saver.Load(this) is { } mainObject)
             {
-                jsonText = File.ReadAllText(file);
-                jObject = JObject.Parse(jsonText);
+                jObject = mainObject;
             }
             else
             {

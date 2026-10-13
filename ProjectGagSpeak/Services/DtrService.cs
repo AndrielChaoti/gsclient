@@ -27,18 +27,20 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
     private readonly KinksterManager _kinksters;
     private readonly RequestsManager _requests;
     private readonly VisibilityWatcher _visibility;
+    private readonly RemoteService _remotes;
 
     private IDtrBarEntry _requestsEntry;
     private IDtrBarEntry _privacyEntry;
     private IDtrBarEntry _notifierEntry;
     private IDtrBarEntry _vibeEntry;
 
+    private DateTime _lastPrivacyCheck = DateTime.MinValue;
     private static HashSet<nint> _nonKinksters = [];
 
     // maybe change up how this is shown, as there are new detailed tooltips and additional click methods for DTR entries.
     public DtrService(ILogger<DtrService> logger, GagspeakMediator mediator,
         MainConfig mainConfig, ChatConfig chatConfig, KinksterManager pairs,
-        RequestsManager requests, VisibilityWatcher visibility)
+        RequestsManager requests, VisibilityWatcher visibility, RemoteService remotes)
         : base(logger, mediator)
     {
         _config = mainConfig;
@@ -46,6 +48,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _kinksters = pairs;
         _requests = requests;
         _visibility = visibility;
+        _remotes = remotes;
 
         _requestsEntry = CreateRequestsDtr();
         _privacyEntry = CreatePrivacyDtr();
@@ -53,12 +56,13 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _vibeEntry = CreateVibeDtr();
 
         Mediator.Subscribe<DDSUpdateRequests>(this, _ => UpdateRequests());
-        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => UpdatePrivacy());
         Mediator.Subscribe<WatchedObjectCreated>(this, _ => UpdatePrivacy());
         Mediator.Subscribe<WatchedObjectDestroyed>(this, _ => UpdatePrivacy());
         Mediator.Subscribe<ConnectedMessage>(this, _ => Refresh());
         Mediator.Subscribe<DisconnectedMessage>(this, _ => Refresh());
         Mediator.Subscribe<DTRRefreshMessage>(this, _ => Refresh());
+
+        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => UpdatePrivacyInterval());
     }
 
     public static IReadOnlySet<nint> NonKinksters => _nonKinksters;
@@ -154,6 +158,17 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _requestsEntry.Tooltip = tooltip.BuiltString;
     }
 
+    private void UpdatePrivacyInterval()
+    {
+        var now = DateTime.Now;
+        // If it happened in the last 10s, exit
+        if ((now - _lastPrivacyCheck).TotalSeconds < 10)
+            return;
+
+        _lastPrivacyCheck = now;
+        UpdatePrivacy();
+    }
+
     private unsafe void UpdatePrivacy()
     {
         if (!_config.Data.DtrPrivacy || !MainHub.IsConnectionDataSynced)
@@ -205,15 +220,15 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
 
     private void UpdateVibeToy()
     {
-        if (!_config.Data.DtrVibeStatus || !MainHub.IsConnectionDataSynced)
+        if (!_config.Data.DtrVibeStatus || !MainHub.IsConnectionDataSynced || !_remotes.ClientData.IsVibrating)
         {
             _vibeEntry.Shown = false;
             return;
         }
 
-        //_vibeEntry.Shown = true;
-        //_notifierEntry.Text = new SeString(new IconPayload(BitmapFontIcon.ElementLightning));
-        //_notifierEntry.Tooltip = new SeString(new TextPayload("VibeStatus is WIP"));
+        _vibeEntry.Shown = true;
+        _vibeEntry.Text = new SeString(new IconPayload(BitmapFontIcon.ElementLightning));
+        _vibeEntry.Tooltip = new SeString(new TextPayload("Your toys are vibrating"));
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
